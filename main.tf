@@ -13,7 +13,7 @@ resource "aws_vpc" "vpc" {
   cidr_block = var.vpc_cidr
 
   tags = {
-    Name        = "${var.app_prefix}_vpc"
+    Name        = "${var.app_name}_vpc"
     Environment = "dev"
     Terraform   = "true"
   }
@@ -28,7 +28,7 @@ resource "aws_subnet" "private_subnets" {
   availability_zone = tolist(data.aws_availability_zones.available.names)[each.value]
 
   tags = {
-    Name      = "${var.app_prefix}_${each.key}"
+    Name      = "${var.app_name}_${each.key}"
     Terraform = "true"
   }
 }
@@ -43,7 +43,7 @@ resource "aws_subnet" "public_subnets" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name      = "${var.app_prefix}_${each.key}"
+    Name      = "${var.app_name}_${each.key}"
     Terraform = "true"
   }
 }
@@ -53,7 +53,7 @@ resource "aws_subnet" "public_subnets" {
 resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = aws_vpc.vpc.id
   tags = {
-    Name = "${var.app_prefix}_igw"
+    Name = "${var.app_name}_igw"
   }
 }
 #Create route tables for public subnets
@@ -66,7 +66,7 @@ resource "aws_route_table" "public_route_table" {
     gateway_id = aws_internet_gateway.internet_gateway.id
   }
   tags = {
-    Name      = "${var.app_prefix}_public_rt"
+    Name      = "${var.app_name}_public_rt"
     Terraform = "true"
   }
 }
@@ -87,7 +87,7 @@ resource "aws_instance" "jenkins_server" {
   subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
   tags = {
-    Name      = "${var.app_prefix}_${var.jenkins_server_name}"
+    Name      = "${var.app_name}_${var.jenkins_server_name}"
     Terraform = true
   }
 }
