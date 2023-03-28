@@ -4,7 +4,7 @@ variable "aws_region" {
 }
 # naming vars
 #---------------------------------------
-variable "app_prefix" {
+variable "app_name" {
   type        = string
   description = "app name prefix for naming"
   default     = "brainiac"
@@ -45,7 +45,7 @@ variable "jenkins_server_name" {
 variable "jenkins_server_ami" {
   type        = string
   description = "Instance AMI"
-  default     = "ami-00c39f71452c08778"
+  default     = "ami-04581fbf744a7d11f"
 }
 variable "jenkins_server_type" {
   type    = string
@@ -57,7 +57,7 @@ variable "jenkins_server_type" {
 variable "ssh_location" {
   type        = string
   description = "My IP address"
-  default     = "173.167.193.106/32"
+  default     = "76.151.136.56/32"
 }
 
 # S3 vars

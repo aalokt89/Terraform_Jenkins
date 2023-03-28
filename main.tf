@@ -86,6 +86,9 @@ resource "aws_instance" "jenkins_server" {
   instance_type          = var.jenkins_server_type
   subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+  key_name               = "webServer_key"
+  user_data              = file("${path.module}/user_data.sh")
+
   tags = {
     Name      = "${var.app_name}_${var.jenkins_server_name}"
     Terraform = true
