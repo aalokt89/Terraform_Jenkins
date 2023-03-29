@@ -10,7 +10,8 @@ data "aws_region" "current" {}
 # Define the VPC
 #----------------------------------------------------
 resource "aws_vpc" "vpc" {
-  cidr_block = var.vpc_cidr
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
 
   tags = {
     Name        = "${var.app_name}_vpc"
