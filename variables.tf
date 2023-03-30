@@ -44,7 +44,7 @@ variable "jenkins_server_name" {
 }
 variable "jenkins_server_ami" {
   type        = string
-  description = "Instance AMI"
+  description = "Instance AMI: Amazon Linux 2"
   default     = "ami-04581fbf744a7d11f"
 }
 variable "jenkins_server_type" {
@@ -57,7 +57,7 @@ variable "jenkins_server_type" {
 variable "ssh_location" {
   type        = string
   description = "My IP address"
-  default     = "76.151.136.56/32"
+  default     = "0.0.0.0/0"
 }
 
 # S3 vars

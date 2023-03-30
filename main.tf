@@ -83,59 +83,59 @@ resource "aws_route_table_association" "public" {
   subnet_id      = each.value.id
 }
 
-# # deploy ec2 instance
-# #----------------------------------------------------
-# resource "aws_instance" "jenkins_server" {
-#   ami                    = var.jenkins_server_ami
-#   instance_type          = var.jenkins_server_type
-#   subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
-#   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
-#   key_name               = "webServer_key"
-#   user_data              = file("${path.module}/user_data_jenkins.sh")
+# deploy ec2 instance
+#----------------------------------------------------
+resource "aws_instance" "jenkins_server" {
+  ami                    = var.jenkins_server_ami
+  instance_type          = var.jenkins_server_type
+  subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
+  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+  key_name               = "webServer_key"
+  user_data              = file("${path.module}/user_data_jenkins.sh")
 
-#   tags = {
-#     Name      = "${var.app_name}_${var.jenkins_server_name}"
-#     Terraform = true
-#   }
-# }
+  tags = {
+    Name      = "${var.app_name}_${var.jenkins_server_name}"
+    Terraform = true
+  }
+}
 
 # # deploy security groups
-# #----------------------------------------------------
-# resource "aws_security_group" "jenkins_sg" {
-#   name        = "${var.jenkins_server_name}_sg"
-#   description = "Allow ssh and http/https traffic"
-#   vpc_id      = aws_vpc.vpc.id
+#----------------------------------------------------
+resource "aws_security_group" "jenkins_sg" {
+  name        = "${var.jenkins_server_name}_sg"
+  description = "Allow ssh and http/https traffic"
+  vpc_id      = aws_vpc.vpc.id
 
-#   # ssh
-#   ingress {
-#     description = "ssh from IP"
-#     from_port   = 22
-#     to_port     = 22
-#     protocol    = "tcp"
-#     cidr_blocks = [var.ssh_location]
-#   }
-# 
-#   ingress {
-#     description = "http access"
-#     from_port   = 8080
-#     to_port     = 8080
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
+  # ssh
+  ingress {
+    description = "ssh from IP"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.ssh_location]
+  }
 
-#   egress {
-#     from_port        = 0
-#     to_port          = 0
-#     protocol         = "-1"
-#     cidr_blocks      = ["0.0.0.0/0"]
-#     ipv6_cidr_blocks = ["::/0"]
-#   }
+  ingress {
+    description = "jenkins default port"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-#   tags = {
-#     Name      = "${var.jenkins_server_name}_sg"
-#     Terraform = "true"
-#   }
-# }
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = {
+    Name      = "${var.jenkins_server_name}_sg"
+    Terraform = "true"
+  }
+}
 
 # deply S3 bucket
 #----------------------------------------------------
