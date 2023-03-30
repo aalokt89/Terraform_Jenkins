@@ -1,3 +1,8 @@
+variable "environment" {
+  type    = string
+  default = "Dev"
+}
+
 variable "aws_region" {
   type    = string
   default = "us-east-1"
@@ -64,8 +69,10 @@ variable "ssh_location" {
 #----------------------------------------
 variable "s3_name" {
   type    = string
-  default = "jenkins_artifacts"
+  default = "jenkins-artifacts"
 }
 
-# VPC vars
-#----------------------------------------
+variable "s3_acl" {
+  type    = string
+  default = "private"
+}
