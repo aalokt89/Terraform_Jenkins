@@ -1,8 +1,3 @@
-# random alphanum
-resource "random_string" "randomize" {
-  length = 8
-}
-
 # Retrieve the list of AZs in the current AWS region
 data "aws_availability_zones" "available" {}
 data "aws_region" "current" {}
@@ -15,7 +10,7 @@ resource "aws_vpc" "vpc" {
 
   tags = {
     Name        = "${var.app_name}_vpc"
-    Environment = "dev"
+    Environment = var.environment
     Terraform   = "true"
   }
 }
@@ -29,8 +24,9 @@ resource "aws_subnet" "private_subnets" {
   availability_zone = tolist(data.aws_availability_zones.available.names)[each.value]
 
   tags = {
-    Name      = "${var.app_name}_${each.key}"
-    Terraform = "true"
+    Name        = "${var.app_name}_${each.key}"
+    Environment = var.environment
+    Terraform   = "true"
   }
 }
 
@@ -44,8 +40,9 @@ resource "aws_subnet" "public_subnets" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name      = "${var.app_name}_${each.key}"
-    Terraform = "true"
+    Name        = "${var.app_name}_${each.key}"
+    Environment = var.environment
+    Terraform   = "true"
   }
 }
 
@@ -54,8 +51,9 @@ resource "aws_subnet" "public_subnets" {
 resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = aws_vpc.vpc.id
   tags = {
-    Name      = "${var.app_name}_igw"
-    Terraform = true
+    Name        = "${var.app_name}_igw"
+    Environment = var.environment
+    Terraform   = true
   }
 }
 
@@ -94,8 +92,9 @@ resource "aws_instance" "jenkins_server" {
   user_data              = file("${path.module}/user_data_jenkins.sh")
 
   tags = {
-    Name      = "${var.app_name}_${var.jenkins_server_name}"
-    Terraform = true
+    Name        = "${var.app_name}_${var.jenkins_server_name}"
+    Environment = var.environment
+    Terraform   = true
   }
 }
 
@@ -132,10 +131,31 @@ resource "aws_security_group" "jenkins_sg" {
   }
 
   tags = {
-    Name      = "${var.jenkins_server_name}_sg"
-    Terraform = "true"
+    Name        = "${var.app_name}_${var.jenkins_server_name}_sg"
+    Environment = var.environment
+    Terraform   = "true"
   }
 }
 
-# deply S3 bucket
+
+# deploy S3 bucket
 #----------------------------------------------------
+# random alphanum
+resource "random_id" "randomize" {
+  byte_length = 8
+}
+
+resource "aws_s3_bucket" "jenkins_artifacts_s3" {
+  bucket = "${var.app_name}-${var.s3_name}-${random_id.randomize.hex}"
+
+  tags = {
+    Name        = "${var.app_name}_${var.s3_name}_s3"
+    Environment = var.environment
+    Terraform   = true
+  }
+}
+# set s3 to private
+resource "aws_s3_bucket_acl" "example" {
+  bucket = aws_s3_bucket.jenkins_artifacts_s3.id
+  acl    = var.s3_acl
+}
