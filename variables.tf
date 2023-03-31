@@ -23,6 +23,20 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "enable_dns_hostnames" {
+  type        = bool
+  description = "enable dns hostnames"
+  default     = true
+}
+
+# common cidrs
+#----------------------------------------
+variable "all_traffic" {
+  type        = string
+  description = "all all traffic"
+  default     = "0.0.0.0/0"
+}
+
 # private subnet vars
 #----------------------------------------
 variable "private_subnets" {
@@ -40,6 +54,11 @@ variable "public_subnets" {
     "public_subnet_2" = 1
   }
 }
+variable "auto_ipv4" {
+  type        = bool
+  description = "enable auto-assign ipv4"
+  default     = true
+}
 
 # ec2 vars
 #----------------------------------------
@@ -55,6 +74,18 @@ variable "jenkins_server_ami" {
 variable "jenkins_server_type" {
   type    = string
   default = "t2.micro"
+}
+
+variable "key_pair" {
+  type        = string
+  description = "ec2 key pair"
+  default     = "webServer_key"
+}
+
+variable "user_data_file" {
+  type        = string
+  description = "user data file path"
+  default     = "${path.module}/user_data_jenkins.sh"
 }
 
 # security group vars

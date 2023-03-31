@@ -6,7 +6,7 @@ data "aws_region" "current" {}
 #----------------------------------------------------
 resource "aws_vpc" "vpc" {
   cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
+  enable_dns_hostnames = var.enable_dns_hostnames
 
   tags = {
     Name        = "${var.app_name}_vpc"
@@ -14,6 +14,7 @@ resource "aws_vpc" "vpc" {
     Terraform   = "true"
   }
 }
+
 # deploy subnets
 #----------------------------------------------------
 # deploy the private subnets
@@ -37,7 +38,7 @@ resource "aws_subnet" "public_subnets" {
   cidr_block        = cidrsubnet(var.vpc_cidr, 8, each.value + 100)
   availability_zone = tolist(data.aws_availability_zones.available.names)[each.value]
 
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = var.auto_ipv4
 
   tags = {
     Name        = "${var.app_name}_${each.key}"
@@ -64,7 +65,7 @@ resource "aws_default_route_table" "public_route_table" {
   default_route_table_id = aws_vpc.vpc.default_route_table_id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.all_traffic
     gateway_id = aws_internet_gateway.internet_gateway.id
   }
   tags = {
@@ -88,8 +89,8 @@ resource "aws_instance" "jenkins_server" {
   instance_type          = var.jenkins_server_type
   subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
-  key_name               = "webServer_key"
-  user_data              = file("${path.module}/user_data_jenkins.sh")
+  key_name               = var.key_pair
+  user_data              = file(var.user_data_file)
 
   tags = {
     Name        = "${var.app_name}_${var.jenkins_server_name}"
@@ -119,14 +120,14 @@ resource "aws_security_group" "jenkins_sg" {
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.all_traffic]
   }
 
   egress {
     from_port        = 0
     to_port          = 0
     protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = [var.all_traffic]
     ipv6_cidr_blocks = ["::/0"]
   }
 
@@ -151,11 +152,14 @@ resource "aws_s3_bucket" "jenkins_artifacts_s3" {
   tags = {
     Name        = "${var.app_name}_${var.s3_name}_s3"
     Environment = var.environment
-    Terraform   = true
+    Terraform   = "true"
   }
 }
 # set s3 to private
-resource "aws_s3_bucket_acl" "example" {
+resource "aws_s3_bucket_acl" "jenkins_artifacts_s3_acl" {
   bucket = aws_s3_bucket.jenkins_artifacts_s3.id
   acl    = var.s3_acl
 }
+
+# deploy IAM role
+#----------------------------------------------------
