@@ -102,6 +102,10 @@ variable "s3_name" {
   type    = string
   default = "jenkins-artifacts"
 }
+variable "s3_force_destroy" {
+  type    = bool
+  default = true
+}
 
 # S3 private
 variable "block_public_acls" {

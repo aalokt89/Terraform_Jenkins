@@ -148,7 +148,8 @@ resource "random_id" "randomize" {
 }
 
 resource "aws_s3_bucket" "jenkins_artifacts_s3" {
-  bucket = "${var.app_name}-${var.s3_name}-${random_id.randomize.hex}"
+  bucket        = "${var.app_name}-${var.s3_name}-${random_id.randomize.hex}"
+  force_destroy = var.s3_force_destroy
 
   tags = {
     Name        = "${var.app_name}_${var.s3_name}_s3"
