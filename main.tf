@@ -82,23 +82,6 @@ resource "aws_route_table_association" "public" {
   subnet_id      = each.value.id
 }
 
-# deploy ec2 instance
-#----------------------------------------------------
-resource "aws_instance" "jenkins_server" {
-  ami                    = var.jenkins_server_ami
-  instance_type          = var.jenkins_server_type
-  subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
-  key_name               = var.key_pair
-  user_data              = file(var.user_data_file)
-
-  tags = {
-    Name        = "${var.app_name}_${var.jenkins_server_name}"
-    Environment = var.environment
-    Terraform   = true
-  }
-}
-
 # # deploy security groups
 #----------------------------------------------------
 resource "aws_security_group" "jenkins_sg" {
@@ -138,6 +121,24 @@ resource "aws_security_group" "jenkins_sg" {
   }
 }
 
+# deploy ec2 instance
+#----------------------------------------------------
+resource "aws_instance" "jenkins_server" {
+  ami                    = var.jenkins_server_ami
+  instance_type          = var.jenkins_server_type
+  subnet_id              = aws_subnet.public_subnets["public_subnet_1"].id
+  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+  key_name               = var.key_pair
+  user_data              = file("${path.module}/${var.user_data_file}")
+  iam_instance_profile   = aws_iam_instance_profile.jenkins_s3_instance_profile.name
+
+  tags = {
+    Name        = "${var.app_name}_${var.jenkins_server_name}"
+    Environment = var.environment
+    Terraform   = true
+  }
+}
+
 
 # deploy S3 bucket
 #----------------------------------------------------
@@ -156,10 +157,60 @@ resource "aws_s3_bucket" "jenkins_artifacts_s3" {
   }
 }
 # set s3 to private
-resource "aws_s3_bucket_acl" "jenkins_artifacts_s3_acl" {
-  bucket = aws_s3_bucket.jenkins_artifacts_s3.id
-  acl    = var.s3_acl
+resource "aws_s3_bucket_public_access_block" "s3_private_access" {
+  bucket                  = aws_s3_bucket.jenkins_artifacts_s3.id
+  block_public_acls       = var.block_public_acls
+  block_public_policy     = var.block_public_policy
+  ignore_public_acls      = var.ignore_public_acls
+  restrict_public_buckets = var.restrict_public_buckets
 }
 
-# deploy IAM role
+# create IAM role
 #----------------------------------------------------
+resource "aws_iam_role" "jenkins_s3_role" {
+  name = "jenkins_s3_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = { Service = "ec2.amazonaws.com" }
+        Action    = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+# create IAM policy
+#----------------------------------------------------
+resource "aws_iam_policy" "jenkins_s3_policy" {
+  name = var.iam_policy_name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = var.iam_actions
+        Resource = [
+          "${var.iam_resource_type}${aws_s3_bucket.jenkins_artifacts_s3.bucket}",
+          "${var.iam_resource_type}${aws_s3_bucket.jenkins_artifacts_s3.bucket}/*"
+        ]
+      }
+    ]
+
+  })
+}
+
+# create IAM policy attachment
+#----------------------------------------------------
+resource "aws_iam_role_policy_attachment" "jenkins_s3_policy_attachment" {
+  role       = aws_iam_role.jenkins_s3_role.name
+  policy_arn = aws_iam_policy.jenkins_s3_policy.arn
+}
+
+# create IAM instance profile
+#----------------------------------------------------
+resource "aws_iam_instance_profile" "jenkins_s3_instance_profile" {
+  name = var.iam_instance_profile_name
+  role = aws_iam_role.jenkins_s3_role.name
+}
