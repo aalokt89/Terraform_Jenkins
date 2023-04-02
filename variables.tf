@@ -85,7 +85,7 @@ variable "key_pair" {
 variable "user_data_file" {
   type        = string
   description = "user data file path"
-  default     = "${path.module}/user_data_jenkins.sh"
+  default     = "install_jenkins.sh"
 }
 
 # security group vars
@@ -103,7 +103,61 @@ variable "s3_name" {
   default = "jenkins-artifacts"
 }
 
-variable "s3_acl" {
-  type    = string
-  default = "private"
+# S3 private
+variable "block_public_acls" {
+  type    = bool
+  default = true
+}
+variable "block_public_policy" {
+  type    = bool
+  default = true
+}
+variable "ignore_public_acls" {
+  type    = bool
+  default = true
+}
+variable "restrict_public_buckets" {
+  type    = bool
+  default = true
+}
+
+# IAM vars
+#----------------------------------------
+# role name
+variable "iam_role_name" {
+  type        = string
+  description = "IAM role name"
+  default     = "jenikins_s3_role"
+}
+
+# policy name
+variable "iam_policy_name" {
+  type        = string
+  description = "IAM policy name"
+  default     = "jenikins_s3_policy"
+}
+
+# policy resource actions
+variable "iam_actions" {
+  type        = list(string)
+  description = "actions allowed by Jenkins server"
+  default = [
+    "s3:GetObject",
+    "s3:PutObject",
+    "s3:ListBucket"
+  ]
+}
+
+# resource type/prefix
+variable "iam_resource_type" {
+  type        = string
+  description = "IAM policy resource type"
+  default     = "arn:aws:s3:::"
+}
+
+# instance profile name
+variable "iam_instance_profile_name" {
+  type        = string
+  description = "instance profile name"
+  default     = "jenkins_s3_instance_profile"
 }
