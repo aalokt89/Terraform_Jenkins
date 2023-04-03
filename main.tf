@@ -58,7 +58,6 @@ resource "aws_internet_gateway" "internet_gateway" {
   }
 }
 
-
 #Edit default route table for public subnets
 #----------------------------------------------------
 resource "aws_default_route_table" "public_route_table" {
@@ -82,7 +81,7 @@ resource "aws_route_table_association" "public" {
   subnet_id      = each.value.id
 }
 
-# # deploy security groups
+# Deploy security groups
 #----------------------------------------------------
 resource "aws_security_group" "jenkins_sg" {
   name        = "${var.jenkins_server_name}_sg"
